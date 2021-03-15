@@ -1,38 +1,40 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import SearchBar from '../components/SearchBar';
-import yelp from '../api/yelp';
+import React, { useState,useEffect } from 'react';
+import { View, Text, StyleSheet,ScrollView } from 'react-native';
+import SearchBar from '../components/SearchBar';  
+import useResults from '../hooks/useResults'
+import ResultsList from '../components/ResultsList'
 
 const SearchScreen = () => {
+  
   const [term, setTerm] = useState('');
-  const [results, setResults] = useState([]);
-
-  const searchApi = async () => {
-    try{
-    const response = await yelp.get('/search', {
-      params: {
-        limit: 20,
-        term,
-        location: 'toronto'
-      }
-    });
-    setResults(response.data.businesses);
+  const[searchApi,results,errorMessage] = useResults();
+  
+  const filterResultsByPrice = (price) => {
+    return results.filter(result => {
+      return result.price === price;
+    })
   }
-
-catch (err){ 
-  console.log(err)
-  }
-}
 
   return (
-    <View>
-      <SearchBar term={term} onTermChange={setTerm} onTermSubmit={searchApi} />
-      <Text>Search Screen</Text>
-      <Text>We have found {results.length} results</Text>
-    </View>
+    <>
+      <SearchBar 
+        term={term} 
+        onTermChange={setTerm} 
+        onTermSubmit={()=> searchApi(term)} 
+        style={styles.search}
+      />
+        {errorMessage ? <Text>{errorMessage}</Text> : null}
+      <ScrollView>
+        <ResultsList title="Cost Effective" results={filterResultsByPrice('$')} />
+        <ResultsList title="little bit pricier" results={filterResultsByPrice('$$')}  />
+        <ResultsList title="Boujee af" results={filterResultsByPrice('$$$')} />
+      </ScrollView>
+      
+    </>
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+});
 
 export default SearchScreen;
